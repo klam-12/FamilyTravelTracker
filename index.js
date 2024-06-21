@@ -40,7 +40,31 @@ async function checkVisisted(userId) {
   });
   return countries;
 }
-app.get("/", async (req, res) => {
+
+app.get("/", async (req,res) => {
+  res.render("signIn.ejs");
+})
+
+app.get("/signUp",(req,res) => {
+  res.render("signUp.ejs");
+})
+
+app.get("/signIn",(req,res) => {
+  console.log(req.body);
+  res.render("signIn.ejs");
+})
+
+app.post("/signUp", (req,res) => {
+  console.log(req.body);
+  res.redirect("/home");
+})
+
+app.post("/signIn", (req,res) => {
+  console.log(req.body);
+  res.redirect("/home");
+})
+
+app.get("/home", async (req, res) => {
   getUser();
   const dataUser = await db.query("select * from users where id = $1",[currentUserId]);
   const user = dataUser.rows[0];

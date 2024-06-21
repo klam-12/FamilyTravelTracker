@@ -1,0 +1,94 @@
+p{
+    margin: 5px 0px;
+}
+
+.container{
+    display: flex;
+    height: 100vh;
+    color: white;
+}
+
+.button{
+    background-color: white;
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    gap: 10px;
+    border-radius: 5px;
+    width: 100%;
+    text-transform: none;
+}
+
+.break-section{
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin: 25px 5px;
+    align-items: center;
+}
+
+.line{
+    border-bottom: 0.5px solid rgb(202, 202, 202);
+    width: 50%;
+}
+
+.width-50{
+    width: 50%;
+}
+
+.padding-horizontal{
+    padding: 50px 80px;
+}
+
+.corner-5{
+    border-radius: 5px;
+}
+
+.green{
+    background-color: #28ac28;
+}
+
+.green-text{
+    color: #28ac28;
+}
+
+.text-bold{
+    font-weight: 700;
+}
+
+
+
+.welcome-section{
+    /* background-color: whitesmoke; */
+    background-image: url(/images/travel_pin.jpg);
+    background-size: 300%;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    padding: 50px;
+    height: 600px;
+    border-radius: 10px;
+}
+
+.btn-signUp{
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    background-color: #28ac28;
+}
+
+.text-above{
+    /* background-color: rgba(255, 255, 255, 0.5); */
+    /* height: 100%; */
+    width: 100%;
+    padding: 5px;
+    border-radius: 5px;
+    color: white;
+}
+
+.size-18{
+    font-size: 18px;
+    opacity: 0.9;
+}
