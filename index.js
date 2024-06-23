@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import session from "express-session";
 import passport from "passport";
 import LocalStrategy from "passport-local";
-import { Strategy } from "passport-local";
+import GoogleStrategy from "passport-google-oauth2"
 
 const app = express();
 const port = 3000;
@@ -39,14 +39,13 @@ const db = new pg.Client({
 db.connect();
 
 let currentUserId = 1;
-let currentUser;
+let loginUser;
 let family = []
 
 // Get members of family
 async function getUser(){
-  const currentUserId = currentUser?.id;
+  const currentUserId = loginUser?.id;
   family = []
-  family.push(currentUser)
   try {
     let data = await db.query("select * from family_members where family_id = $1",[currentUserId]);
     family.push(...data.rows);
@@ -56,12 +55,18 @@ async function getUser(){
 };
 
 async function checkVisisted(userId) {
-  const result = await db.query("SELECT country_code FROM visited_countries where user_id = $1",[userId]);
-  let countries = [];
-  result.rows.forEach((country) => {
-    countries.push(country.country_code);
-  });
-  return countries;
+  try {
+    let countries = [];
+    let result;
+    result = await db.query("SELECT country_code FROM visited_countries where user_id = $1",[userId]);
+
+    result.rows.forEach((country) => {
+      countries.push(country.country_code);
+    });
+    return countries;
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 app.get("/", async (req,res) => {
@@ -81,15 +86,15 @@ app.get("/signIn",(req,res) => {
 // not done
 app.get("/home", async (req, res) => {
   getUser();
-  const dataUser = await db.query("select * from users where id = $1",[currentUserId]);
+  const dataUser = await db.query("select * from family_members where id = $1",[currentUserId]);
   const user = dataUser.rows[0];
   const countries = await checkVisisted(currentUserId);
 
   res.render("index.ejs", {
     countries: countries,
-    total: countries.length,
+    total: countries?.length,
     users: family,
-    color: user.color,
+    color: user?.color,
   });
 });
 
@@ -113,8 +118,8 @@ app.post("/signUp", async (req,res) => {
           "INSERT INTO users (name,password,email,color) VALUES ($1,$2,$3,$4) returning *",
           [name,hash,email,default_color]
         );
-        currentUser = result.rows[0];
-        req.login(currentUser, (err) => {
+        loginUser = result.rows[0];
+        req.login(loginUser, (err) => {
           if(err){
             console.log(err);
             res.redirect("/signUp")
@@ -151,10 +156,10 @@ app.post("/add", async (req, res) => {
     const countryCode = data.country_code;
     try {
       await db.query(
-        "INSERT INTO visited_countries (country_code,user_id) VALUES ($1,$2)",
-        [countryCode,currentUserId]
+        "INSERT INTO visited_countries (country_code,user_id,family_id) VALUES ($1,$2,$3)",
+        [countryCode,currentUserId,loginUser?.id]
       );
-      res.redirect("/");
+      res.redirect("/home");
     } catch (err) {
       console.log(err);
     }
@@ -164,14 +169,14 @@ app.post("/add", async (req, res) => {
 });
 
 
-
 app.post("/user", async (req, res) => {
+  console.log(req.body);
   if(req.body.add){
     res.render('new.ejs');
 
   } else if(req.body.user){
     currentUserId = +req.body.user;
-    res.redirect("/");
+    res.redirect("/home");
   }
 });
 
@@ -179,10 +184,12 @@ app.post("/new", async (req, res) => {
   console.log(req.body);
   const name = req.body.name || "";
   const color = req.body.color || "";
-  const result = await db.query("INSERT INTO family_members (name, color) VALUES ($1,$2) RETURNING id;",[name,color]);
+  const familyID = loginUser?.id;
+  const result = 
+    await db.query("INSERT INTO family_members (name, color,family_id) VALUES ($1,$2,$3) RETURNING id;",[name,color,familyID]);
 
   currentUserId = result?.rows[0]?.id;
-  res.redirect("/");
+  res.redirect("/home");
 });
 
 passport.use("local", new LocalStrategy(async function verify(username, password, cb){
@@ -192,7 +199,7 @@ passport.use("local", new LocalStrategy(async function verify(username, password
       if (result.rows.length > 0) {
         const user = result.rows[0];
         const storedHashedPassword = user.password;
-        currentUser = user;
+        loginUser = user;
         bcrypt.compare(password, storedHashedPassword, (err, valid) => {
           if (err) {
             //Error with password check
@@ -216,6 +223,8 @@ passport.use("local", new LocalStrategy(async function verify(username, password
     }
   }
 ));
+
+
 
 passport.serializeUser((user, cb) => {
   cb(null, user);
