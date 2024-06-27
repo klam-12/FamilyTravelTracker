@@ -77,8 +77,6 @@ app.get("/signUp",(req,res) => {
 });
 
 app.get("/signIn",(req,res) => {
-  console.log("Get /signIn")
-  console.log(req.body);
   res.render("signIn.ejs");
 });
 
@@ -260,8 +258,8 @@ passport.use("local", new LocalStrategy(async function verify(username, password
 passport.use("google", new GoogleStrategy({
   clientID: process.env['GOOGLE_CLIENT_ID'],
   clientSecret: process.env['GOOGLE_CLIENT_SECRET'],
-  callbackURL: 'http://localhost:3000/auth/google/tracker',
-  userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+  callbackURL: process.env.GG_CALLBACK_URL,
+  userProfileURL: process.env.USER_PROFILE_URL,
 }, async function verify(accessToken, refreshToken, profile,cb){
   try {
     const result = await db.query("select * from users where email = $1", [profile.email]);
