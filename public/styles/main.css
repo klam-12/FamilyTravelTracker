@@ -94,6 +94,27 @@ button {
   cursor: pointer;
 }
 
+a{
+  text-decoration: none;
+}
+
+a:hover{
+  text-decoration: underline;
+}
+
+.float-right{
+  font-family: "Roboto", sans-serif;
+  color: white;
+  position: absolute;
+  padding: 15px;
+  right: 0;
+  bottom: 0;
+  margin-right: 10px;
+  &:hover{
+    text-decoration: underline;
+  }
+}
+
 .total-count {
   font-family: "Roboto", sans-serif;
   color: white;

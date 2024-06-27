@@ -21,6 +21,10 @@ p{
     text-transform: none;
 }
 
+.button:hover{
+    opacity: 0.9;
+}
+
 .break-section{
     display: flex;
     flex-direction: row;

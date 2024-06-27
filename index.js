@@ -44,10 +44,9 @@ let family = []
 
 // Get members of family
 async function getUser(){
-  const currentUserId = loginUser?.id;
   family = []
   try {
-    let data = await db.query("select * from family_members where family_id = $1",[currentUserId]);
+    let data = await db.query("select * from family_members where family_id = $1",[loginUser?.id]);
     family.push(...data.rows);
   } catch (error) {
     console.log(error);
@@ -83,11 +82,11 @@ app.get("/signIn",(req,res) => {
   res.render("signIn.ejs");
 });
 
-// not done
 app.get("/home", async (req, res) => {
   getUser();
   const dataUser = await db.query("select * from family_members where id = $1",[currentUserId]);
   const user = dataUser.rows[0];
+  console.log(user);
   const countries = await checkVisisted(currentUserId);
 
   res.render("index.ejs", {
@@ -97,6 +96,26 @@ app.get("/home", async (req, res) => {
     color: user?.color,
   });
 });
+
+app.get("/auth/google",passport.authenticate("google",{
+    scope: ["profile","email"],
+  })
+);
+
+app.get("/auth/google/tracker",passport.authenticate("google", {
+  successRedirect: "/home",
+  failureRedirect: "/login",
+}));
+
+app.get("/logOut", (req,res) =>{
+  req.logout(function(err){
+    if(err){
+      return next(err);
+    }
+    currentUserId = 0;
+    res.redirect("/signIn");
+  })
+})
 
 app.post("/signUp", async (req,res) => {
   const raw_password = req.body.password;
@@ -151,6 +170,20 @@ app.post("/add", async (req, res) => {
       "SELECT country_code FROM countries WHERE LOWER(country_name) LIKE '%' || $1 || '%';",
       [input.toLowerCase()]
     );
+
+    if(result.rows.length === 0){
+      const dataUser = await db.query("select * from family_members where id = $1",[currentUserId]);
+      const user = dataUser.rows[0];
+      const countries = await checkVisisted(currentUserId);
+
+      res.render("index.ejs", {
+        countries: countries,
+        total: countries?.length,
+        users: family,
+        color: user?.color,
+        error: "Cannot find the country"
+      });
+    }
 
     const data = result.rows[0];
     const countryCode = data.country_code;
@@ -224,7 +257,29 @@ passport.use("local", new LocalStrategy(async function verify(username, password
   }
 ));
 
-
+passport.use("google", new GoogleStrategy({
+  clientID: process.env['GOOGLE_CLIENT_ID'],
+  clientSecret: process.env['GOOGLE_CLIENT_SECRET'],
+  callbackURL: 'http://localhost:3000/auth/google/tracker',
+  userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+}, async function verify(accessToken, refreshToken, profile,cb){
+  try {
+    const result = await db.query("select * from users where email = $1", [profile.email]);
+    if(result.rows.length === 0){
+      const user = await db.query(
+        "INSERT INTO users (name,password,email,color) VALUES ($1,$2,$3,$4) returning *",
+        [profile.displayName,"google",profile.email,"teal"]
+      );
+      loginUser = user.rows[0];
+      cb(null,loginUser);
+    } else{
+      loginUser = result.rows[0];
+      cb(null,result.rows[0]);
+    }
+  } catch (error) {
+    cb(error);
+  }
+}))
 
 passport.serializeUser((user, cb) => {
   cb(null, user);

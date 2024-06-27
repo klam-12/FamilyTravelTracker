@@ -387,6 +387,13 @@
   </section>
   <h2 class="total-count">Total Countries: <%=total%>
   </h2>
+
+  <a href="/logOut">
+    <h3 class="float-right">
+      Log out
+    </h3>
+  </a>
+
   <script>
     const country_codes = "<%= countries %>".split(",")
     console.log(typeof ("<%= countries %>"))
